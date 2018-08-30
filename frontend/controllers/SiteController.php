@@ -76,13 +76,12 @@ class SiteController extends Controller
 	 */
 	public function actionIndex()
 	{
-
-		$x = Yii::$app->getDb()->createCommand('SELECT * FROM message')->queryAll();
-echo 1;
+		$x = 1;
 
 		return $this->render('index', [
-			'result' => $x,
-		]);
+				'result' => $x,
+			]
+		);
 	}
 
 	/**
@@ -96,15 +95,13 @@ echo 1;
 			return $this->goHome();
 		}
 
-		$model = new LoginForm();
+		$model = new LoginForm;
 		if ($model->load(Yii::$app->request->post()) && $model->login()) {
 			return $this->goBack();
 		} else {
 			$model->password = '';
 
-			return $this->render(
-				'login',
-				[
+			return $this->render('login', [
 					'model' => $model,
 				]
 			);
@@ -130,7 +127,7 @@ echo 1;
 	 */
 	public function actionContact()
 	{
-		$model = new ContactForm();
+		$model = new ContactForm;
 		if ($model->load(Yii::$app->request->post()) && $model->validate()) {
 			if ($model->sendEmail(Yii::$app->params['adminEmail'])) {
 				Yii::$app->session->setFlash('success', 'Thank you for contacting us. We will respond to you as soon as possible.');
@@ -140,9 +137,7 @@ echo 1;
 
 			return $this->refresh();
 		} else {
-			return $this->render(
-				'contact',
-				[
+			return $this->render('contact', [
 					'model' => $model,
 				]
 			);
@@ -154,9 +149,53 @@ echo 1;
 	 *
 	 * @return mixed
 	 */
-	public function actionAbout()
+	public function actionParse()
 	{
-		return $this->render('about');
+		ini_set('memory_limit', '2048M');
+		set_time_limit(5000000000);
+		$columns = ['type', 'title', 'text', 'from_id', 'to_id', 'extra_data', 'is_important'];
+		$values = [];
+		$rows = 0;
+		$limit = 5000;
+		$total = 5000000;
+
+
+		for ($i = 0; $i < $total; ++$i) {
+			$title = Yii::$app->getSecurity()->generateRandomString(rand(30, 90));
+			$rand = rand(10, 20);
+			for ($j = 0; $j <= $rand; ++$j) {
+				$title[rand(5, mb_strlen($title) - 5)] = ' ';
+			}
+			$text = Yii::$app->getSecurity()->generateRandomString(rand(50, 1000));
+			$rand = rand(100, 200);
+			for ($j = 0; $j <= $rand; ++$j) {
+				$text[rand(5, mb_strlen($text) - 5)] = ' ';
+			}
+
+			$values[] = [
+				rand(1, 1000),
+				$title,
+				$text,
+				rand(1, 1000000),
+				rand(1, 1000000),
+				Yii::$app->getSecurity()->generateRandomString(rand(30, 100)),
+				rand(0, 1),
+			];
+
+			if ($values % $limit === 0) {
+				$rows += Yii::$app->getDb()->createCommand()->batchInsert('message', $columns, $values)->execute();
+				$values = [];
+			}
+		}
+		if (!empty($values)) {
+			$rows += Yii::$app->getDb()->createCommand()->batchInsert('message', $columns, $values)->execute();
+			$values = [];
+		}
+
+		return $this->render('parse', [
+				'rows' => $rows,
+			]
+		);
 	}
 
 	/**
@@ -166,7 +205,7 @@ echo 1;
 	 */
 	public function actionSignup()
 	{
-		$model = new SignupForm();
+		$model = new SignupForm;
 		if ($model->load(Yii::$app->request->post())) {
 			if ($user = $model->signup()) {
 				if (Yii::$app->getUser()
@@ -176,9 +215,7 @@ echo 1;
 			}
 		}
 
-		return $this->render(
-			'signup',
-			[
+		return $this->render('signup', [
 				'model' => $model,
 			]
 		);
@@ -191,7 +228,7 @@ echo 1;
 	 */
 	public function actionRequestPasswordReset()
 	{
-		$model = new PasswordResetRequestForm();
+		$model = new PasswordResetRequestForm;
 		if ($model->load(Yii::$app->request->post()) && $model->validate()) {
 			if ($model->sendEmail()) {
 				Yii::$app->session->setFlash('success', 'Check your email for further instructions.');
@@ -202,9 +239,7 @@ echo 1;
 			}
 		}
 
-		return $this->render(
-			'requestPasswordResetToken',
-			[
+		return $this->render('requestPasswordResetToken', [
 				'model' => $model,
 			]
 		);
@@ -231,9 +266,7 @@ echo 1;
 			return $this->goHome();
 		}
 
-		return $this->render(
-			'resetPassword',
-			[
+		return $this->render('resetPassword', [
 				'model' => $model,
 			]
 		);
