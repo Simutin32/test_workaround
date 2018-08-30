@@ -159,7 +159,6 @@ class SiteController extends Controller
 		$limit = 5000;
 		$total = 5000000;
 
-
 		for ($i = 0; $i < $total; ++$i) {
 			$title = Yii::$app->getSecurity()->generateRandomString(rand(30, 90));
 			$rand = rand(10, 20);
@@ -182,7 +181,7 @@ class SiteController extends Controller
 				rand(0, 1),
 			];
 
-			if ($values % $limit === 0) {
+			if (count($values) % $limit === 0) {
 				$rows += Yii::$app->getDb()->createCommand()->batchInsert('message', $columns, $values)->execute();
 				$values = [];
 			}
